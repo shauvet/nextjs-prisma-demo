@@ -1,30 +1,32 @@
 import React from "react"
 import { GetStaticProps } from "next"
+import Router from 'next/router';
 import Layout from "../components/Layout"
 import Post, { PostProps } from "../components/Post"
+import prisma from '../lib/prisma';
 
 export const getStaticProps: GetStaticProps = async () => {
-  const feed = [
-    {
-      id: "1",
-      title: "Prisma is the perfect ORM for Next.js",
-      content: "[Prisma](https://github.com/prisma/prisma) and Next.js go _great_ together!",
-      published: false,
+  const feed = await prisma.post.findMany({
+    where: { published: true },
+    include: {
       author: {
-        name: "Nikolas Burk",
-        email: "burk@prisma.io",
+        select: { name: true },
       },
     },
-  ]
-  return { 
-    props: { feed }, 
-    revalidate: 10 
-  }
-}
+  });
+  return {
+    props: { feed },
+    revalidate: 10,
+  };
+};
 
 type Props = {
   feed: PostProps[]
 }
+
+const add = async () => {
+  Router.push('/create')
+};
 
 const Blog: React.FC<Props> = (props) => {
   return (
@@ -38,8 +40,17 @@ const Blog: React.FC<Props> = (props) => {
             </div>
           ))}
         </main>
+        <div style={{marginTop: '16px'}}>
+          <button onClick={add}>添加</button>
+        </div>
       </div>
       <style jsx>{`
+        button {
+          background: #ececec;
+          border: 0;
+          border-radius: 0.125rem;
+          padding: 1rem 2rem;
+        }
         .post {
           background: white;
           transition: box-shadow 0.1s ease-in;
